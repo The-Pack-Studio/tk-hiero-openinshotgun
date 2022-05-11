@@ -82,11 +82,16 @@ class HieroOpenInShotgun(Application):
         if not isinstance(selection[0], hiero.core.TrackItem):
             raise TankError("Please select a Shot in the Timeline or Spreadsheet!")
 
-        # this is always okay according to the hiero API docs
-        sequence = selection[0].parent().parent()
+        # find the corresponding shot in shotgun
+        track_item_name = selection[0].name()
+        shotname_parts = track_item_name.split("_") # if no underscore, will return whole name
 
-        shot_name = selection[0].name()
-        sequence_name = sequence.name()
+        if len(shotname_parts) != 2:
+            self.log_error("Trackitem '%s' is not composed of two parts separated by an underscore. Can't find shot name." % track_item_name)
+            QtGui.QMessageBox.critical(None, "Shot Lookup Error!", "Trackitem '%s' is not composed of two parts separated by an underscore. Can't find shot and sequence name." % track_item_name)
+
+        sequence_name = shotname_parts[0]
+        shot_name = shotname_parts[1]
 
         self.log_debug(
             "Looking for a shot '%s' with a sequence '%s' in ShotGrid..."
