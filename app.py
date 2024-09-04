@@ -86,21 +86,28 @@ class HieroOpenInShotgun(Application):
         track_item_name = selection[0].name()
         shotname_parts = track_item_name.split("_") # if no underscore, will return whole name
 
-        if len(shotname_parts) != 2:
-            self.log_error("Trackitem '%s' is not composed of two parts separated by an underscore. Can't find shot name." % track_item_name)
-            QtGui.QMessageBox.critical(None, "Shot Lookup Error!", "Trackitem '%s' is not composed of two parts separated by an underscore. Can't find shot and sequence name." % track_item_name)
+        if len(shotname_parts) != 3:
+            self.log_error("Track item: '{}' is not correctly named. It needs to be in three parts separated by underscores".format(track_item_name))
+            # should append this to a list of errors and display it after the loop is finished ?
+            # QtGui.QMessageBox.critical(None, "Shot Lookup Error!", "Trackitem '%s' is not composed of two parts separated by an underscore. Can't find shot name." % track_item_name)
 
-        sequence_name = shotname_parts[0]
-        shot_name = shotname_parts[1]
+        episode_name = shotname_parts[0]
+        sequence_name = "{}-{}".format(shotname_parts[0], shotname_parts[1])
+        shot_name = "{}-{}-{}".format(shotname_parts[0], shotname_parts[1], shotname_parts[2])
+
+        if episode_name == "" or sequence_name == "" or shot_name == "":
+            self.log_error("Track item: '{}' is not correctly named. It needs to be in three parts separated by underscores".format(track_item_name))
+
 
         self.log_debug(
-            "Looking for a shot '%s' with a sequence '%s' in ShotGrid..."
-            % (shot_name, sequence_name)
+            "Looking for a shot '%s' from sequence '%s', from episode '%s' in ShotGrid..."
+            % (shot_name, sequence_name, episode_name)
         )
 
-        filters = []
-        filters.append(["sg_sequence.Sequence.code", "is", sequence_name])
-        filters.append(["code", "is", shot_name])
+        filters = [ ["sg_sequence.Sequence.episode.Episode.code", "is", episode_name],
+                    ["sg_sequence.Sequence.code", "is", sequence_name],
+                    ["code", "is", shot_name],
+                    ]
 
         sg_data = self.shotgun.find_one("Shot", filters)
 
